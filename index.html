@@ -657,7 +657,7 @@
         }
     } else {
         newScores[winner] += handValue + (8 * 3);
-        newScores[loser] -= (handValue + 16);
+        newScores[loser] -= (handValue + 8);
         for (let i = 0; i < 4; i++) {
             if (i !== winner && i !== loser) {
                 newScores[i] -= 8;
