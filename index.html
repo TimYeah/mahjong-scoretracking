@@ -324,12 +324,27 @@
 
                 <!-- Formulaire de manche -->
                 <div class="round-form">
-                    <h3 style="margin-bottom: 20px;">Enregistrer une manche</h3>
-                    
-                    <div class="form-group">
-                        <label>Qui gagne ?</label>
-                        <select id="winner-select"></select>
-                    </div>
+    <h3 style="margin-bottom: 20px;">Enregistrer une manche</h3>
+    
+    <div class="form-group">
+        <label>Résultat de la manche</label>
+        <div class="radio-group">
+            <label>
+                <input type="radio" name="round-type" value="win" checked>
+                Victoire
+            </label>
+            <label>
+                <input type="radio" name="round-type" value="draw">
+                Manche nulle
+            </label>
+        </div>
+    </div>
+
+    <div id="win-fields">
+        <div class="form-group">
+            <label>Qui gagne ?</label>
+            <select id="winner-select"></select>
+        </div>
 
                     <div class="form-group">
                         <label>Valeur de la main (points)</label>
@@ -353,10 +368,11 @@
                     <div class="form-group" id="loser-group" style="display: none;">
                         <label>Qui a défaussé ?</label>
                         <select id="loser-select"></select>
-                    </div>
+                    </div></div>
 
                     <button class="btn" onclick="recordRound()">Enregistrer la manche</button>
                 </div>
+
 
                 <!-- Historique -->
                 <div class="history">
@@ -378,12 +394,21 @@
         };
 
         // Initialisation
-        document.querySelectorAll('input[name="win-type"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                document.getElementById('loser-group').style.display = 
-                    this.value === 'discard' ? 'block' : 'none';
-            });
+        document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('input[name="win-type"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.getElementById('loser-group').style.display = 
+                this.value === 'discard' ? 'block' : 'none';
         });
+    });
+
+    document.querySelectorAll('input[name="round-type"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.getElementById('win-fields').style.display = 
+                this.value === 'win' ? 'block' : 'none';
+        });
+    });
+});
 
         function startGame() {
             const names = [
@@ -498,143 +523,192 @@
             }
 
             let roundCounter = 0;
-            // Afficher en ordre inverse (plus récent en premier)
-            [...gameState.history].reverse().forEach((entry) => {
-                if (entry.type === 'rotation') {
-                    // Message de rotation
-                    const rotationDiv = document.createElement('div');
-                    rotationDiv.className = 'rotation-notice';
-                    
-                    const rotationText = entry.players.map(p => 
-                        `${p.name} → ${p.newWind}`
-                    ).join(' • ');
-                    
-                    rotationDiv.innerHTML = `
-                        <div class="rotation-title">🔄 Rotation des vents</div>
-                        <div class="rotation-list">${rotationText}</div>
-                    `;
-                    historyList.appendChild(rotationDiv);
-                } else {
-                    // Manche normale
-                    roundCounter++;
-                    const actualRound = gameState.history.filter(h => h.type !== 'rotation').length - roundCounter + 1;
-                    
-                    const item = document.createElement('div');
-                    item.className = 'history-item';
-                    
-                    const winnerName = gameState.players[entry.winner];
-                    const handValue = entry.handValue;
-                    
-                    let details = `${winnerName} gagne ${handValue} pts`;
-                    
-                    if (entry.winType === 'self') {
-                        details += ' (tiré soi-même)';
-                    } else {
-                        const loserName = gameState.players[entry.loser];
-                        details += ` (${loserName} paie)`;
-                    }
+[...gameState.history].reverse().forEach((entry) => {
+    if (entry.type === 'rotation') {
+        const rotationDiv = document.createElement('div');
+        rotationDiv.className = 'rotation-notice';
+        
+        const rotationText = entry.players.map(p => 
+            `${p.name} → ${p.newWind}`
+        ).join(' • ');
+        
+        rotationDiv.innerHTML = `
+            <div class="rotation-title">🔄 Rotation des vents</div>
+            <div class="rotation-list">${rotationText}</div>
+        `;
+        historyList.appendChild(rotationDiv);
+    } else if (entry.type === 'draw') {
+        roundCounter++;
+        const actualRound = gameState.history.filter(h => h.type !== 'rotation').length - roundCounter + 1;
+        
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        item.style.borderLeftColor = '#999';
+        
+        item.innerHTML = `
+            <div class="round-number">Manche ${actualRound}</div>
+            <div class="round-details" style="color: #999; font-style: italic;">Manche nulle - Aucun gagnant</div>
+        `;
+        historyList.appendChild(item);
+    } else {
+        roundCounter++;
+        const actualRound = gameState.history.filter(h => h.type !== 'rotation').length - roundCounter + 1;
+        
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        
+        const winnerName = gameState.players[entry.winner];
+        const handValue = entry.handValue;
+        
+        let details = `${winnerName} gagne ${handValue} pts`;
+        
+        if (entry.winType === 'self') {
+            details += ' (tiré soi-même)';
+        } else {
+            const loserName = gameState.players[entry.loser];
+            details += ` (${loserName} paie)`;
+        }
 
-                    item.innerHTML = `
-                        <div class="round-number">Manche ${actualRound}</div>
-                        <div class="round-details">${details}</div>
-                    `;
-                    historyList.appendChild(item);
-                }
-            });
+        item.innerHTML = `
+            <div class="round-number">Manche ${actualRound}</div>
+            <div class="round-details">${details}</div>
+        `;
+        historyList.appendChild(item);
+    }
+});
         }
 
         function recordRound() {
-            const winner = parseInt(document.getElementById('winner-select').value);
-            const handValue = parseInt(document.getElementById('hand-value').value);
-            const winType = document.querySelector('input[name="win-type"]:checked').value;
-            const loser = winType === 'discard' ? parseInt(document.getElementById('loser-select').value) : null;
+    const roundType = document.querySelector('input[name="round-type"]:checked').value;
+    
+    if (gameState.currentRound >= 16) {
+        alert('La partie est terminée (16 manches maximum)');
+        return;
+    }
 
-            if (handValue < 8) {
-                alert('La valeur minimale est 8 points');
-                return;
-            }
+    if (roundType === 'draw') {
+        // Manche nulle - aucun changement de score
+        gameState.currentRound++;
+        gameState.history.push({
+            type: 'draw',
+            scores: [...gameState.scores]
+        });
 
-            if (winType === 'discard' && winner === loser) {
-                alert('Le gagnant et le perdant ne peuvent pas être la même personne');
-                return;
-            }
-
-            if (gameState.currentRound >= 16) {
-                alert('La partie est terminée (16 manches maximum)');
-                return;
-            }
-
-            // Calcul des scores
-            const newScores = [...gameState.scores];
-
-            if (winType === 'self') {
-                // Tiré soi-même : les 3 autres paient tout
-                const payment = handValue + 8;
-                newScores[winner] += payment * 3;
-                for (let i = 0; i < 4; i++) {
-                    if (i !== winner) {
-                        newScores[i] -= payment;
-                    }
-                }
-            } else {
-                // Sur écart : celui qui a défaussé paie tout + bonus, les 2 autres paient juste le bonus
-                newScores[winner] += handValue + (8 * 3);
-                newScores[loser] -= (handValue + 8);
-                for (let i = 0; i < 4; i++) {
-                    if (i !== winner && i !== loser) {
-                        newScores[i] -= 8;
-                    }
-                }
-            }
-
-            gameState.scores = newScores;
-            gameState.currentRound++;
+        // Détecter rotation des vents (tous les 4 manches)
+        if (gameState.currentRound % 4 === 0 && gameState.currentRound < 16) {
+            const rotationInfo = gameState.players.map((name, index) => {
+                return {
+                    name: name,
+                    newWind: getPlayerWind(index, gameState.currentRound)
+                };
+            });
+            
             gameState.history.push({
-                winner,
-                loser,
-                handValue,
-                winType,
-                scores: [...newScores]
+                type: 'rotation',
+                players: rotationInfo
             });
 
-            // Détecter rotation des vents (tous les 4 manches)
-            if (gameState.currentRound % 4 === 0 && gameState.currentRound < 16) {
-                const rotationInfo = gameState.players.map((name, index) => {
-                    return {
-                        name: name,
-                        newWind: getPlayerWind(index, gameState.currentRound)
-                    };
-                });
-                
-                gameState.history.push({
-                    type: 'rotation',
-                    players: rotationInfo
-                });
+            const message = rotationInfo.map(p => `${p.name} → ${p.newWind}`).join('\n');
+            setTimeout(() => {
+                alert(`🔄 Rotation des vents !\n\n${message}`);
+            }, 100);
+        }
 
-                // Afficher une alerte
-                const message = rotationInfo.map(p => `${p.name} → ${p.newWind}`).join('\n');
-                setTimeout(() => {
-                    alert(`🔄 Rotation des vents !\n\n${message}`);
-                }, 100);
-            }
+        saveGame();
+        updateUI();
 
-            saveGame();
-            updateUI();
+        if (gameState.currentRound >= 16) {
+            setTimeout(() => {
+                alert(`Partie terminée !\n\nRésultats finaux :\n${
+                    gameState.players.map((name, i) => 
+                        `${name}: ${gameState.scores[i] >= 0 ? '+' : ''}${gameState.scores[i]} pts`
+                    ).join('\n')
+                }`);
+            }, 100);
+        }
+        return;
+    }
 
-            // Réinitialiser le formulaire
-            document.getElementById('hand-value').value = 8;
-            
-            // Vérifier si la partie est terminée
-            if (gameState.currentRound >= 16) {
-                setTimeout(() => {
-                    alert(`Partie terminée !\n\nRésultats finaux :\n${
-                        gameState.players.map((name, i) => 
-                            `${name}: ${gameState.scores[i] >= 0 ? '+' : ''}${gameState.scores[i]} pts`
-                        ).join('\n')
-                    }`);
-                }, 100);
+    const winner = parseInt(document.getElementById('winner-select').value);
+    const handValue = parseInt(document.getElementById('hand-value').value);
+    const winType = document.querySelector('input[name="win-type"]:checked').value;
+    const loser = winType === 'discard' ? parseInt(document.getElementById('loser-select').value) : null;
+
+    if (handValue < 8) {
+        alert('La valeur minimale est 8 points');
+        return;
+    }
+
+    if (winType === 'discard' && winner === loser) {
+        alert('Le gagnant et le perdant ne peuvent pas être la même personne');
+        return;
+    }
+
+    // Calcul des scores
+    const newScores = [...gameState.scores];
+
+    if (winType === 'self') {
+        const payment = handValue + 8;
+        newScores[winner] += payment * 3;
+        for (let i = 0; i < 4; i++) {
+            if (i !== winner) {
+                newScores[i] -= payment;
             }
         }
+    } else {
+        newScores[winner] += handValue + (8 * 3);
+        newScores[loser] -= (handValue + 16);
+        for (let i = 0; i < 4; i++) {
+            if (i !== winner && i !== loser) {
+                newScores[i] -= 8;
+            }
+        }
+    }
+
+    gameState.scores = newScores;
+    gameState.currentRound++;
+    gameState.history.push({
+        winner,
+        loser,
+        handValue,
+        winType,
+        scores: [...newScores]
+    });
+
+    if (gameState.currentRound % 4 === 0 && gameState.currentRound < 16) {
+        const rotationInfo = gameState.players.map((name, index) => {
+            return {
+                name: name,
+                newWind: getPlayerWind(index, gameState.currentRound)
+            };
+        });
+        
+        gameState.history.push({
+            type: 'rotation',
+            players: rotationInfo
+        });
+
+        const message = rotationInfo.map(p => `${p.name} → ${p.newWind}`).join('\n');
+        setTimeout(() => {
+            alert(`🔄 Rotation des vents !\n\n${message}`);
+        }, 100);
+    }
+
+    saveGame();
+    updateUI();
+
+    document.getElementById('hand-value').value = 8;
+    
+    if (gameState.currentRound >= 16) {
+        setTimeout(() => {
+            alert(`Partie terminée !\n\nRésultats finaux :\n${
+                gameState.players.map((name, i) => 
+                    `${name}: ${gameState.scores[i] >= 0 ? '+' : ''}${gameState.scores[i]} pts`
+                ).join('\n')
+            }`);
+        }, 100);
+    }
+}
 
         function newGame() {
             if (confirm('Êtes-vous sûr de vouloir commencer une nouvelle partie ?')) {
