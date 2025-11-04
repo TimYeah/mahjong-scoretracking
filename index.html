@@ -537,6 +537,20 @@
             <div class="rotation-list">${rotationText}</div>
         `;
         historyList.appendChild(rotationDiv);
+
+        const summaryDiv = document.createElement('div');
+        summaryDiv.className = 'rotation-notice';
+        
+        const summaryText = gameState.players.map((name, i) => 
+                    `${name}: ${gameState.scores[i] >= 0 ? '+' : ''}${gameState.scores[i]} pts`
+                ).join('\n');
+        
+        summaryDiv.innerHTML = `
+            <div class="rotation-title">Résultat intermédiaire</div>
+            <div class="rotation-list">${summaryText}</div>
+        `;
+        historyList.appendChild(summaryDiv);
+        
     } else if (entry.type === 'draw') {
         roundCounter++;
         const actualRound = gameState.history.filter(h => h.type !== 'rotation').length - roundCounter + 1;
@@ -691,14 +705,6 @@
         const message = rotationInfo.map(p => `${p.name} → ${p.newWind}`).join('\n');
         setTimeout(() => {
             alert(`🔄 Rotation des vents !\n\n${message}`);
-        }, 100);
-
-        setTimeout(() => {
-            alert(`Résultats de fin de manche :\n${
-                gameState.players.map((name, i) => 
-                    `${name}: ${gameState.scores[i] >= 0 ? '+' : ''}${gameState.scores[i]} pts`
-                ).join('\n')
-            }`);
         }, 100);
     }
 
