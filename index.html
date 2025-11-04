@@ -360,7 +360,7 @@
                             </label>
                             <label>
                                 <input type="radio" name="win-type" value="discard">
-                                Sur écart
+                                De la défausse
                             </label>
                         </div>
                     </div>
@@ -560,13 +560,13 @@
         const winnerName = gameState.players[entry.winner];
         const handValue = entry.handValue;
         
-        let details = `${winnerName} gagne ${handValue} pts`;
+        let details = `${winnerName} fait une main à ${handValue} pts`;
         
         if (entry.winType === 'self') {
             details += ' (tiré soi-même)';
         } else {
             const loserName = gameState.players[entry.loser];
-            details += ` (${loserName} paie)`;
+            details += ` (sur ${loserName})`;
         }
 
         item.innerHTML = `
@@ -691,6 +691,14 @@
         const message = rotationInfo.map(p => `${p.name} → ${p.newWind}`).join('\n');
         setTimeout(() => {
             alert(`🔄 Rotation des vents !\n\n${message}`);
+        }, 100);
+
+        setTimeout(() => {
+            alert(`Résultats de fin de manche :\n${
+                gameState.players.map((name, i) => 
+                    `${name}: ${gameState.scores[i] >= 0 ? '+' : ''}${gameState.scores[i]} pts`
+                ).join('\n')
+            }`);
         }, 100);
     }
 
